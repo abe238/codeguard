@@ -12,12 +12,27 @@
     {
       "name": "codeguard-security",
       "source": "./",
-      "description": "Comprehensive security rules for AI coding agents",
+      "skill": "software-security",
+      "description": "Core security rules (22 rules) for AI coding agents - covers credentials, cryptography, input validation, authentication, and more",
       "version": "1.0.1",
       "repository": "https://github.com/project-codeguard/rules.git",
       "tags": [
         "security",
         "code-review",
+        "vulnerability-prevention"
+      ]
+    },
+    {
+      "name": "codeguard-owasp",
+      "source": "./",
+      "skill": "owasp-security",
+      "description": "OWASP Cheat Sheet security rules (86 rules) - comprehensive topic-specific guidance for SQL injection, XSS, CSRF, authentication, and more",
+      "version": "1.0.1",
+      "repository": "https://github.com/project-codeguard/rules.git",
+      "tags": [
+        "security",
+        "owasp",
+        "cheat-sheets",
         "vulnerability-prevention"
       ]
     }

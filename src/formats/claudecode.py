@@ -14,16 +14,26 @@ from formats.base import BaseFormat, ProcessedRule
 class ClaudeCodeFormat(BaseFormat):
     """
     Claude Code plugin format implementation (.md files).
-    
+
     Claude Code Skills use standard markdown files without
     special frontmatter. The original rule content is preserved
-    and placed in the skills/software-security/rules/ directory
-    for plugin distribution.
-    
+    and placed in the skills directory for plugin distribution.
+
     Unlike other IDE formats, Claude Code doesn't require special
     frontmatter transformations - it uses the rules as-is for
     plugin-based Skills.
     """
+
+    def __init__(self, version: str, skill_name: str = "software-security"):
+        """
+        Initialize Claude Code format with version and skill name.
+
+        Args:
+            version: Version string for the format
+            skill_name: Name of the skill directory (default: software-security)
+        """
+        super().__init__(version)
+        self.skill_name = skill_name
 
     def get_format_name(self) -> str:
         """Return Claude Code format identifier."""
@@ -35,7 +45,7 @@ class ClaudeCodeFormat(BaseFormat):
 
     def get_output_subpath(self) -> str:
         """Return Claude Code output subdirectory."""
-        return "skills/software-security/rules"
+        return f"skills/{self.skill_name}/rules"
 
     def generate(self, rule: ProcessedRule, globs: str) -> str:
         """

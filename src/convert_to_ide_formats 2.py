@@ -98,7 +98,7 @@ def update_skill_md(language_to_rules: dict[str, list[str]], skill_path: str) ->
     print(f"Updated SKILL.md with language mappings")
 
 
-def convert_rules(input_path: str, output_dir: str = "dist", include_claudecode: bool = True, version: str = None, filter_tags: list[str] = None, generate_skill_md: bool = True, skill_name: str = "software-security") -> dict[str, list[str]]:
+def convert_rules(input_path: str, output_dir: str = "dist", include_claudecode: bool = True, version: str = None, filter_tags: list[str] = None, generate_skill_md: bool = True) -> dict[str, list[str]]:
     """
     Convert rule file(s) to all supported IDE formats using RuleConverter.
 
@@ -108,8 +108,7 @@ def convert_rules(input_path: str, output_dir: str = "dist", include_claudecode:
         include_claudecode: Whether to generate Claude Code plugin rules (default: True)
         version: Version string to use (default: read from pyproject.toml)
         filter_tags: Optional list of tags to filter by (AND logic, case-insensitive)
-        generate_skill_md: Whether to generate SKILL.md with language mappings (default: True)
-        skill_name: Name of the Claude Code skill directory (default: software-security)
+        generate_skill_md: Whether to generate SKILL.md with language mappings (default: True, only for core)
 
     Returns:
         Dictionary with 'success' and 'errors' lists:
@@ -131,10 +130,10 @@ def convert_rules(input_path: str, output_dir: str = "dist", include_claudecode:
         WindsurfFormat(version),
         CopilotFormat(version),
     ]
-
-    # Include Claude Code format with specified skill name
+    
+    # Only include Claude Code for core rules (committed plugin)
     if include_claudecode:
-        all_formats.append(ClaudeCodeFormat(version, skill_name=skill_name))
+        all_formats.append(ClaudeCodeFormat(version))
 
     converter = RuleConverter(formats=all_formats)
     path = Path(input_path)
@@ -226,24 +225,20 @@ def convert_rules(input_path: str, output_dir: str = "dist", include_claudecode:
             f"\nResults: {len(results['success'])} success, {len(results['errors'])} errors"
         )
 
-    # Generate SKILL.md with language mappings
+    # Generate SKILL.md with language mappings (only for core rules)
     if include_claudecode and generate_skill_md and language_to_rules:
-        # Determine template path based on skill name
-        if skill_name == "software-security":
-            template_path = PROJECT_ROOT / "sources" / "core" / "codeguard-SKILLS.md.template"
-        else:
-            template_path = PROJECT_ROOT / "sources" / "owasp" / "codeguard-SKILLS.md.template"
-
+        template_path = PROJECT_ROOT / "sources" / "core" / "codeguard-SKILLS.md.template"
+        
         if not template_path.exists():
             raise FileNotFoundError(
                 f"SKILL.md template not found at {template_path}. "
                 "This file is required for Claude Code plugin generation."
             )
-
-        output_skill_dir = PROJECT_ROOT / "skills" / skill_name
+        
+        output_skill_dir = PROJECT_ROOT / "skills" / "software-security"
         output_skill_dir.mkdir(parents=True, exist_ok=True)
         output_skill_path = output_skill_dir / "SKILL.md"
-
+        
         # Read template and inject current version from pyproject.toml
         template_content = template_path.read_text(encoding="utf-8")
         # Replace the hardcoded version with actual version
@@ -253,7 +248,7 @@ def convert_rules(input_path: str, output_dir: str = "dist", include_claudecode:
             template_content
         )
         output_skill_path.write_text(template_content, encoding="utf-8")
-
+        
         update_skill_md(language_to_rules, str(output_skill_path))
 
     return results
@@ -328,20 +323,14 @@ if __name__ == "__main__":
     # Check if core/owasp are in the sources for Claude Code plugin generation
     has_core = Path("sources/core") in source_paths
     has_owasp = Path("sources/owasp") in source_paths
+    has_claudecode_sources = has_core or has_owasp
 
-    # Validate templates exist early
     if has_core:
+        # Validate template exists early (needed for SKILL.md generation)
         template_path = PROJECT_ROOT / "sources" / "core" / "codeguard-SKILLS.md.template"
         if not template_path.exists():
             print(f"❌ SKILL.md template not found at {template_path}")
-            print("This file is required for core Claude Code plugin generation.")
-            sys.exit(1)
-
-    if has_owasp:
-        template_path = PROJECT_ROOT / "sources" / "owasp" / "codeguard-SKILLS.md.template"
-        if not template_path.exists():
-            print(f"❌ SKILL.md template not found at {template_path}")
-            print("This file is required for OWASP Claude Code plugin generation.")
+            print("This file is required for Claude Code plugin generation.")
             sys.exit(1)
 
     # Clean output directories once before processing
@@ -350,27 +339,23 @@ if __name__ == "__main__":
         shutil.rmtree(output_path)
         print(f"✅ Cleaned {cli_args.output_dir}/ directory")
 
-    # Clean skill directories separately
-    if has_core:
+    if has_claudecode_sources:
         skills_rules_dir = PROJECT_ROOT / "skills" / "software-security" / "rules"
         if skills_rules_dir.exists():
             shutil.rmtree(skills_rules_dir)
-            print(f"✅ Cleaned skills/software-security/ directory")
-
-    if has_owasp:
-        skills_rules_dir = PROJECT_ROOT / "skills" / "owasp-security" / "rules"
-        if skills_rules_dir.exists():
-            shutil.rmtree(skills_rules_dir)
-            print(f"✅ Cleaned skills/owasp-security/ directory")
+            print(f"✅ Cleaned skills/ directory")
 
     # Print processing summary
     if len(source_paths) > 1:
         sources_list = ', '.join(p.name for p in source_paths)
         print(f"\nConverting {len(source_paths)} sources: {sources_list}")
-        if has_core:
-            print("  → Core rules → skills/software-security/")
-        if has_owasp:
-            print("  → OWASP rules → skills/owasp-security/")
+        if has_claudecode_sources:
+            included = []
+            if has_core:
+                included.append("core")
+            if has_owasp:
+                included.append("owasp")
+            print(f"(Claude Code plugin will include: {', '.join(included)} rules)")
         print()
     
     # Convert all sources
@@ -389,10 +374,8 @@ if __name__ == "__main__":
         is_owasp = source_path == Path("sources/owasp")
         # Include Claude Code format for both core and owasp rules
         include_claudecode = is_core or is_owasp
-        # Generate SKILL.md for both core and OWASP (each has its own template)
-        generate_skill_md = is_core or is_owasp
-        # Determine skill name based on source
-        skill_name = "software-security" if is_core else "owasp-security" if is_owasp else "software-security"
+        # Only generate SKILL.md for core (template is in sources/core/)
+        generate_skill_md = is_core
 
         print(f"Processing: {source_path}")
         results = convert_rules(
@@ -401,8 +384,7 @@ if __name__ == "__main__":
             include_claudecode=include_claudecode,
             version=version,
             filter_tags=filter_tags,
-            generate_skill_md=generate_skill_md,
-            skill_name=skill_name
+            generate_skill_md=generate_skill_md
         )
         
         aggregated["success"].extend(results["success"])

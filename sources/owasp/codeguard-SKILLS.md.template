@@ -1,0 +1,60 @@
+---
+name: owasp-security
+description: OWASP security cheat sheets for AI coding agents. Comprehensive security guidelines based on OWASP's official cheat sheet series covering authentication, injection prevention, cryptography, and more. Use alongside the core software-security skill for complete coverage.
+codeguard-version: "x.x.x"
+framework: "Project CodeGuard - OWASP Cheat Sheets"
+purpose: "Embed OWASP security best practices into AI coding workflows"
+---
+
+# OWASP Security Skill (Project CodeGuard)
+This skill provides comprehensive security guidance based on the **OWASP Cheat Sheet Series**. It complements the core `software-security` skill with detailed, topic-specific security guidelines from the Open Web Application Security Project (OWASP).
+
+## When to Use This Skill
+This skill should be activated when:
+- Implementing authentication or authorization systems
+- Handling user input that could lead to injection attacks
+- Working with cryptographic operations or secure storage
+- Building web applications with session management
+- Configuring security headers or content security policies
+- Implementing file upload, download, or handling functionality
+- Working with APIs, REST services, or GraphQL endpoints
+- Handling cross-origin requests or implementing CORS
+
+## How to Use This Skill
+When writing or reviewing code:
+1. Language-Specific Rules: Apply rules from /rules directory based on the language being used:
+<!-- LANGUAGE_MAPPINGS_START -->
+<!-- LANGUAGE_MAPPINGS_END -->
+2. Topic-Specific Guidance: Each rule covers a specific security topic (SQL injection, XSS, CSRF, etc.)
+3. Defense in Depth: Apply multiple relevant rules for comprehensive security coverage
+
+## OWASP Security Rules
+The security rules are available in the `rules/` directory and cover:
+- Injection Prevention (SQL, Command, LDAP, XSS)
+- Authentication and Session Management
+- Cryptographic Security
+- Input Validation and Output Encoding
+- Access Control and Authorization
+- Security Headers and Transport Layer Security
+- API and Web Service Security
+- Error Handling and Logging
+
+### Usage Workflow
+When generating or reviewing code, follow this workflow:
+
+### 1. Identify Security Domains
+Before writing code:
+- Check: What type of user input am I handling? → Apply relevant injection prevention rules
+- Check: Am I dealing with authentication/sessions? → Apply authentication rules
+- Check: Am I storing sensitive data? → Apply cryptographic storage rules
+
+### 2. Code Generation
+While writing code:
+- Apply OWASP-recommended patterns from relevant rules
+- Follow the specific guidance for your language/framework
+
+### 3. Security Review
+After writing code:
+- Review against implementation checklists in each applicable rule
+- Verify defense-in-depth by checking if multiple relevant rules are satisfied
+- Document which OWASP guidelines were followed
